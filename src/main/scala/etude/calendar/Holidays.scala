@@ -1,5 +1,7 @@
 package etude.calendar
 
+import java.time.LocalDate
+
 
 /**
  *
@@ -7,5 +9,7 @@ package etude.calendar
 trait Holidays {
   def holidays(span: CalendarDateSpan): Seq[Holiday]
 
-  def between(start: String): HolidayDateContainer = HolidayDateContainer(start, this)
+  def between(start: String): HolidayDateContainer = HolidayDateContainer(LocalDate.parse(start), this)
+
+  def between(start: LocalDate): HolidayDateContainer = HolidayDateContainer(start, this)
 }

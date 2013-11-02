@@ -5,7 +5,7 @@ import java.time.{Duration, DayOfWeek, LocalDate}
 /**
  * Date span (start/end dates are inclusive).
  */
-case class CalendarDateSpan(start: LocalDate, end: LocalDate, holidayProvider: Option[Holidays] = None) {
+case class CalendarDateSpan(start: LocalDate, end: LocalDate) {
   def isBetween(other: LocalDate): Boolean = {
     start.isAfter(other) && end.isBefore(other)
   }
@@ -33,11 +33,8 @@ case class CalendarDateSpan(start: LocalDate, end: LocalDate, holidayProvider: O
     }
   }
 
-  def holidays: Seq[Holiday] = {
-    holidayProvider match {
-      case Some(h) => h.holidays(this)
-      case _ => Seq()
-    }
+  def holidays(holidays: Holidays): Seq[Holiday] = {
+    holidays.holidays(this)
   }
 }
 

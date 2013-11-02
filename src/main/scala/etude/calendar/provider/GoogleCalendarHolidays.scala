@@ -7,19 +7,24 @@ import java.time.LocalDate
 import etude.religion.Religion
 import etude.region.Country
 import etude.calendar.{CalendarDateSpan, ReligiousHoliday, NationalHoliday, Holiday}
+import scala.collection.immutable.HashMap
 
 case class GoogleCalendarHolidays(locale: Locale = Locale.getDefault) {
 
   def nationalHolidays(span: CalendarDateSpan, country: Country): Seq[Holiday] = {
-    holidays(url(span, country), locale).map {
-      p =>
-        NationalHoliday(p._2, Some(p._1))
+    if (supportedRegions.contains(country)) {
+      holidays(url(span, country)).map {
+        p =>
+          NationalHoliday(p._2, Some(p._1))
+      }
+    } else {
+      Seq()
     }
   }
 
   def religiousHolidays(span: CalendarDateSpan, religion: Religion): Seq[Holiday] = {
     if (supportedReligions.contains(religion)) {
-      holidays(url(span, religion), locale).map {
+      holidays(url(span, religion)).map {
         p =>
           ReligiousHoliday(p._2, Some(p._1))
       }
@@ -127,9 +132,18 @@ case class GoogleCalendarHolidays(locale: Locale = Locale.getDefault) {
     (entry \ "title").text -> LocalDate.parse(((entry \ "when").last \ "@startTime").text)
   }
 
-  private def holidays(url: URL, locale: Locale): Seq[Pair[String, LocalDate]] = {
-    (XML.load(url) \ "entry").map(holiday)
+  private def holidays(url: URL): Seq[Pair[String, LocalDate]] = {
+    GoogleCalendarHolidays.cache.get(Pair(locale, url)) match {
+      case Some(cached) => cached
+      case _ =>
+        val result = (XML.load(url) \ "entry").map(holiday)
+        GoogleCalendarHolidays.cache.update(Pair(locale, url), result)
+        result
+    }
   }
 
 }
 
+object GoogleCalendarHolidays {
+  private val cache: scala.collection.mutable.Map[Pair[Locale, URL], Seq[Pair[String, LocalDate]]] = scala.collection.mutable.Map()
+}

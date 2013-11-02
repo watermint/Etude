@@ -24,4 +24,6 @@ case class BusinessDays(patterns: Seq[BusinessHolidayPattern] = Seq()) {
     BusinessDays(patterns :+ BusinessHolidayPatternReligious(religion))
 
   def between(start: String): BusinessDayContainer = BusinessDayContainer(LocalDate.parse(start), this)
+
+  def between(start: LocalDate): BusinessDayContainer = BusinessDayContainer(start, this)
 }
