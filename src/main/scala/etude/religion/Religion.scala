@@ -1,12 +1,11 @@
 package etude.religion
 
 import java.util.Locale
-import etude.calendar.provider.GoogleCalendarHolidays
-import etude.calendar.CalendarDateSpan
+import etude.calendar.{ReligiousHolidays, CalendarDateSpan}
 
 case class Religion(id: String) {
-  def holidays(span: CalendarDateSpan, locale: Locale = Locale.getDefault) =
-    GoogleCalendarHolidays(locale).religiousHolidays(span, this)
+  def holidays(span: CalendarDateSpan, lang: Locale = Locale.getDefault) =
+    ReligiousHolidays(this, lang).holidays(span)
 }
 
 object Religion {

@@ -2,34 +2,43 @@ package etude.calendar.provider
 
 import scala.xml.{Node, XML}
 import java.util.Locale
-import java.net.URL
+import java.net.URI
 import java.time.LocalDate
 import etude.religion.Religion
 import etude.region.Country
-import etude.calendar.{CalendarDateSpan, ReligiousHoliday, NationalHoliday, Holiday}
-import scala.collection.immutable.HashMap
+import etude.calendar._
+import etude.http.Resource
+import etude.calendar.ReligiousHoliday
+import etude.calendar.NationalHoliday
+import scala.Some
 
 case class GoogleCalendarHolidays(locale: Locale = Locale.getDefault) {
 
-  def nationalHolidays(span: CalendarDateSpan, country: Country): Seq[Holiday] = {
+  def nationalHolidays(span: CalendarDateSpan, country: Country): Either[Exception, Seq[Holiday]] = {
     if (supportedRegions.contains(country)) {
-      holidays(url(span, country)).map {
-        p =>
-          NationalHoliday(p._2, Some(p._1))
+      holidays(uri(span, country)) match {
+        case Left(e) => Left(e)
+        case Right(r) =>
+          Right(
+            r.map(e => NationalHoliday(e.date, Some(e.title), country))
+          )
       }
     } else {
-      Seq()
+      Left(NoCalendarFoundException("No calendar found for country: " + country))
     }
   }
 
-  def religiousHolidays(span: CalendarDateSpan, religion: Religion): Seq[Holiday] = {
+  def religiousHolidays(span: CalendarDateSpan, religion: Religion): Either[Exception, Seq[Holiday]] = {
     if (supportedReligions.contains(religion)) {
-      holidays(url(span, religion)).map {
-        p =>
-          ReligiousHoliday(p._2, Some(p._1))
+      holidays(uri(span, religion)) match {
+        case Left(e) => Left(e)
+        case Right(r) =>
+          Right(
+            r.map(e => ReligiousHoliday(e.date, Some(e.title)))
+          )
       }
     } else {
-      Seq()
+      Left(NoCalendarFoundException("No calendar found for religion: " + religion))
     }
   }
 
@@ -110,8 +119,8 @@ case class GoogleCalendarHolidays(locale: Locale = Locale.getDefault) {
     supportedRegions.get(country).get
   }
 
-  private def url(span: CalendarDateSpan, name: String): URL = {
-    new URL(
+  private def uri(span: CalendarDateSpan, name: String): URI = {
+    new URI(
       "http://www.google.com/calendar/feeds/" +
         calendarLanguage(locale) + "." + name +
         "%23holiday%40group.v.calendar.google.com/public/full?" +
@@ -120,30 +129,57 @@ case class GoogleCalendarHolidays(locale: Locale = Locale.getDefault) {
     )
   }
 
-  private def url(span: CalendarDateSpan, country: Country): URL = {
-    url(span, calendarName(country))
+  private def uri(span: CalendarDateSpan, country: Country): URI = {
+    uri(span, calendarName(country))
   }
 
-  private def url(span: CalendarDateSpan, religion: Religion): URL = {
-    url(span, religion.id)
+  private def uri(span: CalendarDateSpan, religion: Religion): URI = {
+    uri(span, religion.id)
   }
 
-  private def holiday(entry: Node): Pair[String, LocalDate] = {
-    (entry \ "title").text -> LocalDate.parse(((entry \ "when").last \ "@startTime").text)
+  private def holiday(entry: Node): GoogleCalendarHolidays.Entry = {
+    GoogleCalendarHolidays.Entry(
+      date = LocalDate.parse(((entry \ "when").last \ "@startTime").text),
+      title = (entry \ "title").text
+    )
   }
 
-  private def holidays(url: URL): Seq[Pair[String, LocalDate]] = {
-    GoogleCalendarHolidays.cache.get(Pair(locale, url)) match {
-      case Some(cached) => cached
-      case _ =>
-        val result = (XML.load(url) \ "entry").map(holiday)
-        GoogleCalendarHolidays.cache.update(Pair(locale, url), result)
-        result
-    }
+  private def holidays(uri: URI): Either[Exception, Seq[GoogleCalendarHolidays.Entry]] = {
+    GoogleCalendarHolidays.cacheUpdate(locale, uri, {
+      uri =>
+        Resource.get(uri) match {
+          case Left(e) => Left(e)
+          case Right(r) =>
+            r.statusCode match {
+              case c if (c / 100) == 2 =>
+                Right((XML.load(r.content) \ "entry").map(holiday))
+              case _ =>
+                Left(NoCalendarFoundException("No calendar found for: " + uri))
+            }
+        }
+    })
   }
 
 }
 
 object GoogleCalendarHolidays {
-  private val cache: scala.collection.mutable.Map[Pair[Locale, URL], Seq[Pair[String, LocalDate]]] = scala.collection.mutable.Map()
+
+  private case class Entry(date: LocalDate, title: String)
+
+  private val cache: scala.collection.mutable.Map[Pair[Locale, URI], Seq[Entry]] = scala.collection.mutable.Map()
+
+  private def cacheUpdate(locale: Locale, uri: URI, result: URI => Either[Exception, Seq[Entry]]): Either[Exception, Seq[Entry]] = {
+    val key = Pair(locale, uri)
+    cache.get(key) match {
+      case Some(cached) => Right(cached)
+      case _ =>
+        result(uri) match {
+          case Left(e) => Left(e)
+          case Right(r) =>
+            cache.update(key, r)
+            Right(r)
+        }
+    }
+  }
+
 }
