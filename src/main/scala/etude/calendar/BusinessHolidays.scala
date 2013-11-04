@@ -37,10 +37,10 @@ case class BusinessHolidays(patterns: Seq[BusinessHolidayPattern] = Seq(),
   def withReligion(religion: Religion): BusinessHolidays =
     BusinessHolidays(patterns :+ BusinessHolidayPatternReligious(religion))
 
-  def holidays(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = {
+  def holidaysWithReason(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = {
     Aggregation.aggregate(patterns.map {
       p =>
-        p -> { () => p.holidays(span) }
+        p -> { () => p.holidaysWithReason(span) }
     }.toMap) match {
       case Left(e) => Left(e)
       case Right(r) => Right(r.flatten)
@@ -80,7 +80,7 @@ case class BusinessHolidayPatternSpecificDay(day: LocalDate,
                                              title: Option[String] = None)
   extends BusinessHolidayPattern {
 
-  def holidays(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = {
+  def holidaysWithReason(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = {
     if (span.isBetween(day)) {
       Right(Seq(BusinessHoliday(day, title)))
     } else {
@@ -93,7 +93,7 @@ case class BusinessHolidayPatternMonthDay(monthDay: MonthDay,
                                           title: Option[String] = None)
   extends BusinessHolidayPattern {
 
-  def holidays(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = {
+  def holidaysWithReason(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = {
     Right(
       span.years.flatMap {
         y =>
@@ -112,7 +112,7 @@ case class BusinessHolidayPatternDayOfWeek(dayOfWeek: DayOfWeek,
                                            title: Option[String] = None)
   extends BusinessHolidayPattern {
 
-  def holidays(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = {
+  def holidaysWithReason(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = {
     Right(span.weeks(dayOfWeek).map(BusinessHoliday(_, title)))
   }
 }
@@ -121,12 +121,12 @@ case class BusinessHolidayPatternCountry(country: Country)
   extends BusinessHolidayPattern {
   lazy val nationalHolidays = NationalHolidays(country)
 
-  def holidays(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = nationalHolidays.holidays(span)
+  def holidaysWithReason(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = nationalHolidays.holidaysWithReason(span)
 }
 
 case class BusinessHolidayPatternReligious(religion: Religion)
   extends BusinessHolidayPattern {
   lazy val religiousHolidays = ReligiousHolidays(religion)
 
-  def holidays(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = religiousHolidays.holidays(span)
+  def holidaysWithReason(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = religiousHolidays.holidaysWithReason(span)
 }

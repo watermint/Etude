@@ -11,7 +11,7 @@ case class BusinessDayContainer(date: LocalDate, businessDays: BusinessDays) ext
 
   def and(end: LocalDate): Seq[BusinessDay] = {
     val span = CalendarDateSpan(date, end)
-    BusinessHolidays(businessDays.patterns).holidays(span) match {
+    BusinessHolidays(businessDays.patterns).holidaysWithReason(span) match {
       case Left(l) => throw l
       case Right(r) =>
         val days = r.map(_.date).distinct

@@ -11,7 +11,7 @@ case class NationalHolidays(country: Country,
                             locale: Locale = Locale.getDefault) extends Holidays {
   lazy val googleCalendar = GoogleCalendarHolidays(locale)
 
-  def holidays(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = {
+  def holidaysWithReason(span: CalendarDateSpan): Either[Exception, Seq[Holiday]] = {
     googleCalendar.nationalHolidays(span, country)
   }
 }

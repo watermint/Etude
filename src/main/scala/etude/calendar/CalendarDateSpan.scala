@@ -34,7 +34,7 @@ case class CalendarDateSpan(start: LocalDate, end: LocalDate) {
   }
 
   def holidays(holidays: Holidays): Seq[Holiday] = {
-    holidays.holidays(this) match {
+    holidays.holidaysWithReason(this) match {
       case Left(l) => throw l
       case Right(r) => r
     }

@@ -10,14 +10,14 @@ import org.apache.http.client.methods.HttpGet
 object Resource {
   def httpClient: CloseableHttpClient = HttpClients.createDefault()
 
-  def get(uri: URI): Either[Exception, Response] = {
+  def get[T](uri: URI): Either[Exception, Response] = {
     val client = httpClient
     try {
       Right(Response(client.execute(new HttpGet(uri))))
     } catch {
       case e: Exception => Left(e)
-//    } finally {
-//      client.close()
+    } finally {
+      client.close()
     }
   }
 }
