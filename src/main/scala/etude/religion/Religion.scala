@@ -1,13 +1,7 @@
 package etude.religion
 
-import java.util.Locale
-import etude.calendar.{Holiday, ReligiousHolidays, CalendarDateSpan}
 
-case class Religion(id: String) {
-  def holidays(span: CalendarDateSpan, lang: Locale = Locale.getDefault): Seq[Holiday] = {
-    ReligiousHolidays(this, lang).holidays(span)
-  }
-}
+case class Religion(id: String)
 
 object Religion {
   /**

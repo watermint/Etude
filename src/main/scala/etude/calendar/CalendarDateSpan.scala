@@ -40,9 +40,3 @@ case class CalendarDateSpan(start: LocalDate, end: LocalDate) {
     }
   }
 }
-
-object CalendarDateSpan {
-  def apply(start: String, end: String): CalendarDateSpan = {
-    CalendarDateSpan(LocalDate.parse(start), LocalDate.parse(end))
-  }
-}

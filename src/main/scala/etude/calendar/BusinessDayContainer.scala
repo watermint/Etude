@@ -6,9 +6,6 @@ import java.time.LocalDate
  *
  */
 case class BusinessDayContainer(date: LocalDate, businessDays: BusinessDays) extends CalendarDate {
-
-  def and(end: String): Seq[BusinessDay] = and(LocalDate.parse(end))
-
   def and(end: LocalDate): Seq[BusinessDay] = {
     val span = CalendarDateSpan(date, end)
     BusinessHolidays(businessDays.patterns).holidaysWithReason(span) match {

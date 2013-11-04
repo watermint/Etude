@@ -1,17 +1,12 @@
 package etude.region
 
 import java.util.Locale
-import etude.calendar.{NationalHolidays, Holiday, CalendarDateSpan}
 
 /**
  * ISO 3166-1 country
  */
 case class Country(iso3166: String) {
   lazy val locale: Locale = new Locale.Builder().setRegion(iso3166).build()
-
-  def holidays(span: CalendarDateSpan, lang: Locale = Locale.getDefault): Seq[Holiday] = {
-    NationalHolidays(this, lang).holidays(span)
-  }
 }
 
 object Country {
