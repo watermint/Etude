@@ -7,10 +7,10 @@ import org.apache.http.client.methods.HttpGet
 /**
  *
  */
-object Resource {
+case class Resource(uri: URI) {
   def httpClient: CloseableHttpClient = HttpClients.createDefault()
 
-  def get[T](uri: URI): Either[Exception, Response] = {
+  def get: Either[Exception, Response] = {
     val client = httpClient
     try {
       Right(Response(client.execute(new HttpGet(uri))))

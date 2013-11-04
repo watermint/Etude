@@ -7,7 +7,7 @@ import java.time.LocalDate
 import etude.religion.Religion
 import etude.region.Country
 import etude.calendar._
-import etude.http.Resource
+import etude.http._
 import etude.calendar.ReligiousHoliday
 import etude.calendar.NationalHoliday
 import scala.Some
@@ -147,7 +147,7 @@ case class GoogleCalendarHolidays(locale: Locale = Locale.getDefault) {
   private def holidays(uri: URI): Either[Exception, Seq[GoogleCalendarHolidays.Entry]] = {
     GoogleCalendarHolidays.cacheUpdate(locale, uri, {
       uri =>
-        Resource.get(uri) match {
+        uri.get match {
           case Left(e) => Left(e)
           case Right(r) =>
             r.statusCode match {
