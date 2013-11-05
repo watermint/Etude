@@ -7,16 +7,18 @@ import etude.io.Memory._
 /**
  *
  */
-case class Response(statusCode: Int,
+case class Response(statusCode: StatusCode,
                     headers: Map[String, String],
                     contentType: Option[String],
                     contentEncoding: Option[String],
-                    content: InputStream)
+                    content: InputStream) {
+}
 
 object Response {
+
   def apply(response: HttpResponse): Response = {
     Response(
-      statusCode = response.getStatusLine.getStatusCode,
+      statusCode = StatusCode(response.getStatusLine.getStatusCode),
       headers = response.getAllHeaders.map(h => h.getName -> h.getValue).toMap,
       contentType = response.getEntity.getContentEncoding match {
         case h: Header => Some(h.getValue)

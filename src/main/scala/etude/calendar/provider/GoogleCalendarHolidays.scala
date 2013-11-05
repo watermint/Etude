@@ -151,10 +151,12 @@ case class GoogleCalendarHolidays(locale: Locale = Locale.getDefault) {
           case Left(e) => Left(e)
           case Right(r) =>
             r.statusCode match {
-              case c if (c / 100) == 2 =>
+              case c: StatusSuccessful =>
                 Right((XML.load(r.content) \ "entry").map(holiday))
-              case _ =>
+              case c: StatusInternalServerError =>
                 Left(NoCalendarFoundException("No calendar found for: " + uri))
+              case c =>
+                Left(CalendarLoadException("Load failed with HTTP status code: " + c.code))
             }
         }
     })
